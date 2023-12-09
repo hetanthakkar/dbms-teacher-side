@@ -10,6 +10,7 @@ import CourseListScreen from './CourseListScreen';
 import AddCourseScreen from './AddModal';
 import Chats from './Chats'
 import Chatscreen from './Chatscreen'
+import LoginScreen from './LoginScreen'
 const Stack = createStackNavigator();
 const ChatStack = createNativeStackNavigator();
 const TeacherNavigator = () => {
@@ -21,6 +22,7 @@ const TeacherNavigator = () => {
         <Stack.Screen name="CourseList" component={CourseListScreen} options={{ title: 'Your Courses' }} />
         <Stack.Screen name="AddCourse" component={AddCourseScreen} options={{ title: 'Add Course' }} />
         <Stack.Screen name="ChatNavigator" component={ChatNavigator} options={{ title: 'Add Course' }} />
+        <Stack.Screen name="LoginScreen" component={LoginScreen} options={{ title: 'Add Course' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -31,34 +31,14 @@ const [password, setPassword] = useState('');
                         color: '#4A55A2',
                         fontSize: 27,
                         fontWeight: '600'
-                    }}>Sign up</Text>
+                    }}>Login</Text>
                     <Text style={{
                         color: 'black',
                         marginTop: 10,
                         fontWeight: '600'
-                    }}>Register your Account</Text>
+                    }}>Welcome Back</Text>
                 </View>
-                <View style={{
-                    marginTop: 50
-                }}>
-                    <Text
-                        style={{
-                            fontSize: 18,
-                            fontWeight: '600',
-                            color: 'gray'
-                        }}>Name</Text>
-                    <TextInput
-                        value={name}
-                        onChangeText={(text) => setName(text)}
-                        placeholderTextColor={'black'}
-                        placeholder='Enter your Name here'
-                        style={{
-                            borderBottomColor: 'black',
-                            borderBottomWidth: 1,
-                            width: 300,
-                            paddingVertical: 10
-                        }} />
-                </View>
+           
                 <View style={{
                     marginTop: 25
                 }}>
@@ -106,32 +86,30 @@ const [password, setPassword] = useState('');
                 <TouchableOpacity
   onPress={async() => {
     // Call the signup API here
-
-
-    let res = await fetch('http://127.0.0.1:5000/user/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          name: name,
-          password: password,
-          email: email,
-          role: 0,
-        }),
-      });
+    let res = await fetch('http://127.0.0.1:5000/user/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        password: password,
+        email: email,
+        role: 0,
+      }),
+    });
+    
+    let da=await res.text()
+    da=JSON.parse(da)
+    console.log(da)
+    if (da.message=='Login successful') {
+    //   const data = await res.text();
       
-      if (res.ok) {
-        const data = await res.text();
-        await AsyncStorage.setItem('token', data);
-        navigation.navigate('CourseList');
-      } else {
-        Alert.alert('Enter valid email/password');
-      }
+      await AsyncStorage.setItem('user', JSON.stringify(da.user));
 
-
-      }}
+      navigation.navigate("CourseList")
+    }
+  }}
   style={{
     width: 200,
     backgroundColor: '#4A55A2',

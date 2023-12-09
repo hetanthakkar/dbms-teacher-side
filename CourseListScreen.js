@@ -1,44 +1,46 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, Alert, StyleSheet, Button, Modal, TextInput } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, Alert, StyleSheet, Button, Modal, TextInput,Picker } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import AddModal from './AddModal'
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PickerIOS } from '@react-native-picker/picker';
 const CourseListScreen = ({navigation}) => {
-  const [courses, setCourses] = useState([
-    {
-      id: '1',
-      courseName: 'React Native Basics',
-      duration: '10 hours',
-      category: 'Mobile Development',
-      subCategory: 'React Native',
-      description: 'Learn the fundamentals of React Native development.',
-    },
-    {
-      id: '2',
-      courseName: 'React Native Basics 2',
-      duration: '10 hours',
-      category: 'Mobile Development',
-      subCategory: 'React Native',
-      description: 'Learn the fundamentals of React Native development.',
-    },
-    {
-        id: '3',
-        courseName: 'React Native Basics 2',
-        duration: '10 hours',
-        category: 'Mobile Development',
-        subCategory: 'React Native',
-        description: 'Learn the fundamentals of React Native development.',
-      },
-      {
-        id: '4',
-        courseName: 'React Native Basics 2',
-        duration: '10 hours',
-        category: 'Mobile Development',
-        subCategory: 'React Native',
-        description: 'Learn the fundamentals of React Native development.',
-      },
+  // const [courses, setCourses] = useState([
+  //   {
+  //     id: '1',
+  //     courseName: 'React Native Basics',
+  //     duration: '10 hours',
+  //     category: 'Mobile Development',
+  //     subCategory: 'React Native',
+  //     description: 'Learn the fundamentals of React Native development.',
+  //   },
+  //   {
+  //     id: '2',
+  //     courseName: 'React Native Basics 2',
+  //     duration: '10 hours',
+  //     category: 'Mobile Development',
+  //     subCategory: 'React Native',
+  //     description: 'Learn the fundamentals of React Native development.',
+  //   },
+  //   {
+  //       id: '3',
+  //       courseName: 'React Native Basics 2',
+  //       duration: '10 hours',
+  //       category: 'Mobile Development',
+  //       subCategory: 'React Native',
+  //       description: 'Learn the fundamentals of React Native development.',
+  //     },
+  //     {
+  //       id: '4',
+  //       courseName: 'React Native Basics 2',
+  //       duration: '10 hours',
+  //       category: 'Mobile Development',
+  //       subCategory: 'React Native',
+  //       description: 'Learn the fundamentals of React Native development.',
+  //     },
 
-    // Add more courses as needed
-  ]);
+  //   // Add more courses as needed
+  // ]);
 
   const [isModalVisible, setModalVisible] = useState(false);
   const [newCourseName, setNewCourseName] = useState('');
@@ -46,16 +48,112 @@ const CourseListScreen = ({navigation}) => {
   const [newCategory, setNewCategory] = useState('');
   const [newSubCategory, setNewSubCategory] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  const [categories, setCategories] = useState([]);
 
+  const [courses, setCourses] = useState([]);
+
+  const fetchCourses=async()=>{
+    let res = await fetch('http://127.0.0.1:5000/courses', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    });
+    let id=AsyncStorage.getItem("user_id")
+    if (res.ok) {
+      const data = await res.text();
+      let courses=JSON.parse(data).courses
+      courses.filter((course)=>course?.teacher_id==id)
+      // setCourses(courses)
+    }
+  }
+
+  const fetchCategories=async()=>{
+    let res = await fetch('http://127.0.0.1:5000/categories', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    });
+
+    categories=await res.text()
+    categories=JSON.parse(categories).categories
+    console.log("ciourse",categories)
+
+    setCategories(categories)
+  }
+  useEffect(()=>{
+    fetchCourses()
+    fetchCategories()
+  },[])
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
 
-  const handleAddCourse = () => {
+  const handleAddCourse = async() => {
     // Validate input fields
     if (!newCourseName || !newDuration || !newCategory || !newSubCategory || !newDescription) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
+    }
+
+    else{
+
+      // check if the current category exist -> if exist grab its id
+      // check if the current subcategory exist-> if exist grab its id
+      // add 
+      let res = await fetch('http://127.0.0.1:5000/categories', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    });
+
+    categories=await res.text()
+    categories=JSON.parse(categories).categories
+    found=categories.filter(cat=>cat.name==newCategory)
+    console.log("lasdnf",found[0]?.cat_id)
+    if (found.length>0){
+      let res1 = await fetch(`http://127.0.0.1:5000/categories/${found[0]?.cat_id}/subcategories`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      });
+      sub=await res1.text()
+      sub=JSON.parse(sub)?.subcategories
+      subFound=sub.filter(sub=>sub.name==newSubCategory)
+      if(subFound?.length>0){
+        let res = await fetch('http://127.0.0.1:5000/user/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            subcat_id : subFound[0]?.subcat_id,
+            price : 6,
+            description : newDescription,
+            content : newCourseName,
+            ratings : 0,
+            number_of_lessons : newDuration,
+            teacher_id : 1
+          }),
+        });   
+      }
+
+      // add subcat to the category
+
+      
+      console.log("subw",subFound)
+    }
+      
+    //   console.log(subFound)
+    // }
     }
 
     // Generate a new unique ID (for simplicity, you may use a more robust method)
@@ -128,7 +226,7 @@ const CourseListScreen = ({navigation}) => {
 
   return (
     <View style={{ padding: 20, backgroundColor: '#f0f0f0', flex: 1 }}>
-      <View style={{flex:0.92,}}>
+      <View style={{flex:0.92}}>
       <FlatList
         data={courses}
         keyExtractor={(item) => item.id}
@@ -155,11 +253,15 @@ const CourseListScreen = ({navigation}) => {
               style={styles.input}
               onChangeText={setNewDuration}
             />
-            <TextInput
-              placeholder="Category"
-              style={styles.input}
-              onChangeText={setNewCategory}
-            />
+        <PickerIOS
+        selectedValue={categories[0]}
+        onValueChange={(itemValue) => handleCategoryChange(itemValue)}
+      >
+        <PickerIOS.Item label="Select Category" value="" />
+        {categories.map((category, index) => (
+          <PickerIOS.Item key={index} label={category} value={category} />
+        ))}
+      </PickerIOS>
             <TextInput
               placeholder="Subcategory"
               style={styles.input}
@@ -172,14 +274,16 @@ const CourseListScreen = ({navigation}) => {
               onChangeText={setNewDescription}
             />
 
-            <Button title="Add Course" onPress={handleAddCourse} />
-            <Button title="Cancel" onPress={toggleModal} />
+<TouchableOpacity onPress={handleAddCourse} style={{backgroundColor:'#24a0ed',paddingHorizontal:20,borderRadius:20,padding:8}}>
+      <Text style={{ fontSize: 15,  textAlign: 'center',color:'white' }}>Add Course</Text>
+        </TouchableOpacity>         
+           <Button title="Cancel" onPress={toggleModal} />
           </View>
         </View>
       </Modal>
       </View>
       <View style={{flex:0.08,justifyContent:'space-around',alignItems:'center',marginTop:20,flexDirection:'row'}}>
-      <TouchableOpacity style={{backgroundColor:'#24a0ed',paddingHorizontal:20,borderRadius:20,padding:8}}>
+      <TouchableOpacity onPress={toggleModal} style={{backgroundColor:'#24a0ed',paddingHorizontal:20,borderRadius:20,padding:8}}>
       <Text style={{ fontSize: 15,  textAlign: 'center',color:'white' }}>Add Course</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={()=>navigation.navigate("ChatNavigator")} style={{backgroundColor:'#24a0ed',borderRadius:20,padding:8}}>
